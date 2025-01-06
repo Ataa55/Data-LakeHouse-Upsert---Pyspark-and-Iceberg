@@ -27,7 +27,8 @@ The upsert functionality is implemented in the `notebooks/upserts_with_pyspark.i
 4. **Apply Changes to Data Lake**: Merge the changes into the target table in the data lake.
 5. **Apply Changes to Database**: After merging changes to the data lake, connect to the PostgreSQL database and apply the same changes to the target table in the database.
 
-![alt text](upserts_pipeline.png)
+![upserts_pipeline](https://github.com/user-attachments/assets/e75f6bb5-2a61-467a-8c8d-e35e438b1514)
+
 
 ### Key Functions
 
@@ -35,6 +36,9 @@ The upsert functionality is implemented in the `notebooks/upserts_with_pyspark.i
 - `upsert_datalake_target`: This function performs the upsert operation by merging changes from the source table into the target table in the data lake.
 - `alter_database_target`: This function alters the target table schema in the PostgreSQL database to match the source table schema if there are any new or dropped columns.
 - `upsert_database_target`: This function performs the upsert operation by merging changes from the source table into the target table in the PostgreSQL database.
+
+![upserts_flowchart](https://github.com/user-attachments/assets/4aaa7e05-fea9-421a-af37-a4e9e41bfeca)
+
 
 ### Example Usage
 
