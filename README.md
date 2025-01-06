@@ -43,32 +43,93 @@ The upsert functionality is implemented in the `notebooks/upserts_with_pyspark.i
 ### Example Usage
 
 ```python
-from utils import upsert_datalake_target, alter_datalake_target, upsert_database_target, alter_database_target
-from pyspark.sql import SparkSession
+from pyspark.sql import SparkSession, DataFrame
+from pyspark.sql import functions as F
+from sqlalchemy import create_engine, exc, text, inspect
+import config
+from utils import * 
+import consts 
 
-# Initialize Spark session
-spark = SparkSession.builder \
-    .appName("pyspark_upsert") \
-    .getOrCreate()
 
-# Define schema and table names
-schema_name = "iceberg"
-source_table = "source_customers"
-target_table = "target_customers"
-key_columns = ["CustomerID"]
-upsert_flag = "cdc_flag"
+if __name__ == "__main__":
 
-# Detect and apply schema changes in data lake
-alter_datalake_target(spark, schema_name, source_table, target_table)
+    #Glopal variables
+    postgres_cred = config.POSTGRS_CREDENTIALS
+    # spark variables
+    spark_master = "spark://af27ca1c49e9:7077"
+    app_name = "pyspark_upsert"
+    memory = "2g"
+    
+    # data lake variables
+    csv_file = "/home/iceberg/warehouse/Customers.csv"
+    schema_name = "iceberg"
+    db_schema_name = "public"
+    source_table = "patition_source_customers"
+    target_table = "patition_target_customers"
+    key_column = ["CustomerID"]
+    upsert_flag = "cdc_flag"
+    db_table = "costumers"
+    changes_table = f"{db_table}_cdc"
+    
+    # start spark session 
+    spark = start_spark_session(spark_master = spark_master, 
+                                app_name = app_name, 
+                                memory = memory)
 
-# Detect and apply schema changes in database
-alter_database_target(spark, schema_name, source_table, target_table)
+    
+    
+    df = spark.read.csv(csv_file, 
+                        header=True, 
+                        inferSchema=True)
+    
+    df_limited = df.limit(15)
 
-# Detect record changes
-changes = get_source_changes(spark, schema_name, source_table, target_table, key_columns)
+    #create data bsae at iceberg if not exists
+    spark.sql(f"create database if not exists {schema_name}")
 
-# Perform upsert in data lake
-upsert_datalake_target(spark, schema_name, source_table, target_table, key_columns, changes, upsert_flag)
+    # write the data as iceberg tables
+    df_limited.write.format("iceberg").saveAsTable(f"{schema_name}.{source_table}",
+                                                   mode="overwrite")
+    df_limited.write.format("iceberg").saveAsTable(f"{schema_name}.{target_table}")
 
-# Perform upsert in database
-upsert_database_target(spark, schema_name, source_table, target_table, key_columns, changes, upsert_flag)
+
+    # get the source and target iceberg tables
+    df_source = spark.sql(f"select * from {schema_name}.{source_table}")
+    df_target = spark.sql(f"select * from {schema_name}.{target_table}")
+
+    # alter any scchema changes at the target datalake table and get the source schema changes
+    source_new_actions = alter_datalake_target(spark, 
+                                               schema_name, 
+                                               source_table, 
+                                               target_table)
+
+    # get the new record actions (inserts, updates, deletes)
+    changes, join_result = get_source_changes(spark, 
+                                              schema_name, 
+                                              source_table, 
+                                              target_table, 
+                                              key_column)
+    
+    # write the changes at the database
+    write_sdf_to_postgres_db(changes, 
+                             config.POSTGRS_CREDENTIALS, 
+                             changes_table, 
+                             mode = "overwrite")
+    
+    # upsert those changes at the datalake
+    upsert_datalake_target(spark, 
+                           schema_name, 
+                           source_table, 
+                           target_table,
+                           key_column,
+                           changes, 
+                           upsert_flag)
+
+    # connect to the database
+    engine = connect_to_db(postgres_cred)
+
+    # alter any scchema changes at the target datalake table and get the source schema changes
+    alter_db_target(engine, db_table, db_schema_name, source_new_actions)
+
+    # upsert (inserts, deletes, upates) changes at the database target
+    upsert_db_target(engine, db_table, db_schema_name)
