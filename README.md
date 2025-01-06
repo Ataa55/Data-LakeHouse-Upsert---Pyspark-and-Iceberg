@@ -4,6 +4,8 @@
 
 This project demonstrates how to perform upsert operations using PySpark and Iceberg with PostgreSQL as the backend database. Upsert, also known as merge, is a database operation that allows you to insert new records and update existing records within a single operation.
 
+![upserts_pipeline](https://github.com/user-attachments/assets/e75f6bb5-2a61-467a-8c8d-e35e438b1514)
+
 ## Project Structure
 
 - `notebooks/`: Contains Jupyter notebooks demonstrating the upsert functionality.
@@ -26,8 +28,6 @@ The upsert functionality is implemented in the `notebooks/upserts_with_pyspark.i
 3. **Detect Record Changes**: Identify new, updated, and deleted records by comparing source and target DataFrames using hashing and a full outer join.
 4. **Apply Changes to Data Lake**: Merge the changes into the target table in the data lake.
 5. **Apply Changes to Database**: After merging changes to the data lake, connect to the PostgreSQL database and apply the same changes to the target table in the database.
-
-![upserts_pipeline](https://github.com/user-attachments/assets/e75f6bb5-2a61-467a-8c8d-e35e438b1514)
 
 
 ### Key Functions
