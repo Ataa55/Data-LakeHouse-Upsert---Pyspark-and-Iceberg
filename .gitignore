@@ -1,0 +1,28 @@
+# Ignore the warehouse folder
+warehouse/
+
+# Ignore the specific parquet file
+00000-3-a184e64f-3c5e-4e87-ac27-cbc405142206-0-00001.parquet
+
+# Ignore Python cache files
+notebooks/__pycache__/
+
+# Ignore Jupyter notebook checkpoints
+notebooks/.ipynb_checkpoints/
+
+# Ignore metastore_db directory
+notebooks/metastore_db/
+
+# Ignore spark_warehouse directory
+notebooks/spark_warehouse/
+
+# Ignore derpy.log file
+notebooks/derpy.log
+
+# Ignore specific PDF files
+upsert_fuctionality_with_pyspark.pdf
+upsert_with_pyspark.pdf
+
+# Ignore specific PNG files
+upserts_flowchart.png
+upserts_pipeline.png
