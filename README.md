@@ -1,4 +1,4 @@
-# add Upsert Functionality to DataLakehouses with PySpark and Iceberg
+# DataLakeHouses Upserts with PySpark and Iceberg
 
 ## Overview
 
